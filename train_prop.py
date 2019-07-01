@@ -218,6 +218,8 @@ def load_models(params):
         return AE_only_model, AE_PP_model, encoder, decoder, property_predictor, kl_loss_var
 
     elif params['do_prop_pred_only']:
+        for layer in encoder.layers:
+            layer.trainable = False
         property_predictor = property_predictor_model(params)
         reg_prop_pred = property_predictor(z_mean)
         reg_prop_pred = Lambda(identity, name='reg_prop_pred')(reg_prop_pred)
@@ -439,7 +441,8 @@ def only_property_run(params):
                loss_weights=model_loss_weights,
                optimizer=optim)
 
-
+    # print(encoder.summary())
+    # print(property_predictor.summary())
     PP_model.fit(X_train, model_train_targets,
                          batch_size=params['batch_size'],
                          epochs=params['epochs'],
@@ -452,9 +455,13 @@ def only_property_run(params):
 
     
     
-    # encoder.save(params['encoder_weights_file'])
+    encoder.save('encoder_fix_weights.h5')
     # decoder.save(params['decoder_weights_file'])
     property_predictor.save(params['prop_pred_weights_file'])
+    # encoder.save("after.h5")
+    # model_json = encoder.to_json()
+    # with open("model.json", "w") as json_file:
+    #     json_file.write(model_json)
 
     print('time of run : ', time.time() - start_time)
     print('**FINISHED**')
